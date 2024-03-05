@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block additional_styles %}
+   <style>
+      #map {
+        height: 75%;
+      }
+
+      /* 
+      * Optional: Makes the sample page fill the window. 
+      */
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+{% endblock %}
+
+{% block content %}
+  <body>
+    <!-- <img src="https://media.npr.org/assets/img/2023/01/14/this-is-fine_custom-dcb93e90c4e1548ffb16978a5a8d182270c872a9-s1100-c50.jpg" alt="Italian Trulli"> -->
+
+    <h1>{{event.event_title}}</h1>
+    <strong style="padding-left: 20px">Event description: </strong>
+    <p style="padding-left: 20px">{{ event.event_description }}</p>
+    <strong style="padding-left: 20px">Start time: </strong>
+    <p style="padding-left: 20px">{{ event.event_start_time }}</p>
+    <strong style="padding-left: 20px">End time: </strong>
+    <p style="padding-left: 20px">{{ event.event_end_time }}</p>
+    {% if 'admin_users' in user_groups %}
+        {% if event.event_status == "EventStatus.PENDING" %}
+            <form style="padding-left: 20px" action="{% url 'hoo_event:approveEvent' event.id %}" method="post">
+                {% csrf_token %}
+                <input type="submit" value="Approve"><br><br>
+            </form>
+            <form style="padding-left: 20px" action="{% url 'hoo_event:denyEvent' event.id %}" method="post">
+                {% csrf_token %}
+                <input type="submit" value="Deny"><br><br>
+            </form>
+        {% endif %}
+    {% endif %}
+
+    {% if event.event_status == "EventStatus.APPROVED" %}
+        <strong style="padding-left: 20px">Event capacity:</strong>
+        <p style="padding-left: 20px">{{ event.event_capacity }} / {{ event.event_full_capacity }}</p>
+        {% if not events_signed_up %}
+            <form style="padding-left: 20px" action="{% url 'hoo_event:signUp' event.id %}" method="post">
+                {% csrf_token %}
+                <input type="submit" value="Sign Up"><br><br>
+            </form>
+        {% else %}
+             <form style="padding-left: 20px" action="{% url 'hoo_event:removeSignUp' event.id %}" method="post">
+                 {% csrf_token %}
+                 <input type="submit" value="Remove Sign Up"><br><br>
+             </form>
+        {% endif %}
+    {% endif %}
+    {% if user.email == event.event_email %}
+        {% if event.event_status == "EventStatus.PENDING" %}
+              <a class="text-white" style="padding-left: 20px" href="{% url 'hoo_event:editEvent' event.id %}">Click here to Edit your Event</a>
+        {% endif %}
+        <br><br>
+        <a class="text-white" style="padding-left: 20px" href="{% url 'hoo_event:deleteEvent' event.id %}">Click here to Delete this Event</a>
+    {% endif %}
+    <div id="map"></div>
+
+    <!-- prettier-ignore -->
+    <script>(g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})
+        ({key: "AIzaSyBUBySC3PIE9ulvwqdfw86CjtmFZs6GtkA", v: "beta"});</script>
+    
+    <script>
+
+      // Initialize and add the map
+      let map;
+
+      async function initMap() {
+        // The location of Uluru
+        console.log("About to print");
+        console.log("{{ event.event_title }}");
+        console.log("{{ event.event_latitude }}");
+        console.log("{{ event.event_longitude }}");
+        const position = { lat: parseFloat('{{ event.event_latitude }}'), lng: parseFloat('{{ event.event_longitude }}')};
+        // Request needed libraries.
+        //@ts-ignore
+        const { Map } = await google.maps.importLibrary("maps");
+        const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
+
+        // The map, centered at Uluru
+        map = new Map(document.getElementById("map"), {
+          zoom: 17,
+          center: position,
+          mapId: "DEMO_MAP_ID",
+        });
+
+        // The marker, positioned at Uluru
+        const marker = new AdvancedMarkerElement({
+          map: map,
+          position: position,
+          title: "{{event.event_title}}",
+        });
+      }
+
+      initMap();
+      // function initMap() {
+      //       var map = new google.maps.Map(document.getElementById('map'), {
+      //           center: { lat: parseFloat('{{ event.latitude }}'), lng: parseFloat('{{ event.longitude }}')},
+      //           zoom: 15
+      //       });
+
+      //       var marker = new google.maps.Marker({
+      //           position: { lat: parseFloat('{{ event.latitude }}'), lng: parseFloat('{{ event.longitude }}')},
+      //           map: map,
+      //           title: '{{ event.name }}',
+      //       });
+      //   }
+
+  // Generate distance from user's current location to event location:    
+  // https://maps.googleapis.com/maps/api/distancematrix/json
+  // ?destinations=New%20York%20City%2C%20NY
+  // &origins=Washington%2C%20DC%7CBoston
+  // &units=imperial
+  // &key=YOUR_API_KEY
+    </script>
+  </body>
+{% endblock %}

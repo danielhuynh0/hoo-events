@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block additional_styles %}
+    <style>
+        /* 
+        * Always set the map height explicitly to define the size of the div element
+        * that contains the map. 
+        */
+        #map {
+        height: 100%;
+        }
+
+        /* 
+        * Optional: Makes the sample page fill the window. 
+        */
+        html,
+        body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        }
+    </style>
+{% endblock %}
+
+
+{% block content %}
+  <body>
+    <h1>Welcome to Hoo Events, {{ user.username }}!</h1>
+    <div id="map"></div>
+
+    <!-- 
+      The `defer` attribute causes the callback to execute after the full HTML
+      document has been parsed. For non-blocking uses, avoiding race conditions,
+      and consistent behavior across browsers, consider loading using Promises.
+      See https://developers.google.com/maps/documentation/javascript/load-maps-js-api
+      for more information.
+      -->
+    <script>
+        var events_json = "{{events}}"
+        // console.log(events_json);
+        var events_parsed = JSON.parse(events_json.replace(/&quot;/g,'"'));
+
+        console.log(events_parsed);
+
+        var events = [];
+
+        for (const event of events_parsed) {
+            let title = event["fields"].event_title;
+            let longitude = event["fields"].event_longitude;
+            let latitude = event["fields"].event_latitude;
+            let start_time = event["fields"].event_start_time;
+            let description = event["fields"].event_description;
+            start_time = start_time.replace("T", " ");
+            start_time = start_time.replace("Z", "");
+            events.push({
+                event_title: title,
+                longitude: longitude,
+                latitude: latitude,
+                start_time: start_time,
+                description: description,
+            });
+            console.log(title);
+            console.log(longitude);
+            console.log(latitude);
+        }
+        
+        // console.log(events);
+        // events = JSON.parse(events.replace(/&quot;/g,'"'));
+
+        // for (const event of events) {
+        //     console.log(event.event_title);
+        // }
+        
+        let map;
+        let features = [];
+
+        async function initMap() {
+            const iconBase =
+                "https://developers.google.com/maps/documentation/javascript/examples/full/images/";
+            const { Map, InfoWindow } = await google.maps.importLibrary("maps");
+            const infoWindow = new InfoWindow();
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: new google.maps.LatLng(38.033554, -78.507980),
+                zoom: 15,
+            });
+
+            for(const event of events) {
+                features.push({
+                    position: new google.maps.LatLng(event.latitude, event.longitude),
+                    type: "event",
+                    title: event.event_title,
+                    time: event.start_time,
+                    description: event.description,
+                });
+            };
+
+            for(let i = 0; i < features.length; i++) {
+                const marker = new google.maps.Marker({
+                    position: features[i].position,
+                    map: map,
+                });
+                marker.addListener("mouseover", () => {
+                    const contentString = '<b>' + features[i].title + '</b><br><br>' + features[i].time + '<br><br>' + features[i].description;
+                    infoWindow.close();
+                    infoWindow.setContent(contentString);
+                    infoWindow.open(map, marker);
+                });
+            }
+        }
+
+        window.initMap = initMap;
+    </script>
+    <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBUBySC3PIE9ulvwqdfw86CjtmFZs6GtkA&callback=initMap&v=weekly"
+    defer
+    ></script>
+  </body>
+  {% endblock %}
