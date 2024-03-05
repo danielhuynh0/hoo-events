@@ -1,7 +1,3 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)](https://classroom.github.com/a/xHnRfY9D)
-# Django Practice Assessment
-
-__Name:__
-
-__Computing ID:__
-
+HooEvents
+-
+Introducing HooEvents: a central location for students at UVA to find events happening around Grounds, sign up to attend, host your own events, and meet fellow Hoos!
